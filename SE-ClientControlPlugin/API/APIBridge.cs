@@ -24,7 +24,7 @@ namespace SE_ClientControlPlugin.API
         private bool commandReady;
         public bool CommandReady { get { bool tmpVar = commandReady; commandReady = false; return tmpVar; } }
         public int Port { get; }
-        public string SecurityKey { get; }
+        public string SecurityKey { get; private set;}
 
         public APIBridge(int port)
         {
@@ -43,7 +43,14 @@ namespace SE_ClientControlPlugin.API
 
         private string GenerateSecurityKey()
         {
-            return "V7ry55j2i3WTaLBYxDuFtg==";
+            Random r = new Random(DateTime.Now.Millisecond);
+            byte[] b = new byte[10];
+            
+            for (int i = 0; i < b.Length; i++) {
+                b[i] = Convert.ToByte(r.Next(36) + 65);
+            }
+            SecurityKey = Convert.ToBase64String(b);
+            return SecurityKey;
         }
 
 
@@ -96,7 +103,7 @@ namespace SE_ClientControlPlugin.API
             {
                 computedHash = hmac.ComputeHash(messageBuffer);
             }
-
+            
             if (!Convert.ToBase64String(computedHash).Equals(hash))
                 return false;
             return true;
@@ -107,7 +114,7 @@ namespace SE_ClientControlPlugin.API
         {
             DateTime beginTimeWaiting = DateTime.Now;
             commandReady=true;
-
+            
             while (Command.getCommandResult() == EnumCommands.WAITING &&
                 (beginTimeWaiting - DateTime.Now).TotalSeconds <= 2)
             {
@@ -170,7 +177,7 @@ namespace SE_ClientControlPlugin.API
                 SendClientResponse(client, Command.Response());
                 //Thread.Sleep(100);
             }
-
+            listener.Stop();
 
         }
 
