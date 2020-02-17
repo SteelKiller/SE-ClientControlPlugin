@@ -45,6 +45,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -70,6 +71,8 @@
     <Compile Include="API\ICommandsBase.cs" />
     <Compile Include="API\EnumCommands.cs" />
     <Compile Include="API\MoveGridTo.cs" />
+    <Compile Include="API\WebResponse\Commands\GetLastPlayersLoginTime.cs" />
+    <Compile Include="API\WebResponse\Commands\PlayersInformationFormat.cs" />
     <Compile Include="API\WebResponse\NotFound.cs" />
     <Compile Include="API\WebResponse\Forbidden.cs" />
     <Compile Include="API\WebResponse\IResponseBase.cs" />

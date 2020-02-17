@@ -84,7 +84,7 @@ namespace SE_ClientControlPlugin.API
         public bool ProcessingInThread(string[] args)
         {           
             if (!CommandName.Equals(args[0]))
-                return false;
+                return false; 
 
             
             if (!SearchTargetGrid(Convert.ToInt64(args[1]), false, GetVector3DFromGPS(args[3])))

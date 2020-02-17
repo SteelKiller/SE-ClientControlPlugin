@@ -10,6 +10,7 @@ using SE_ClientControlPlugin.API.WebResponse;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Security.Cryptography;
+using SE_ClientControlPlugin.API.WebResponse.Commands;
 
 namespace SE_ClientControlPlugin.API
 {
@@ -24,14 +25,15 @@ namespace SE_ClientControlPlugin.API
         private bool commandReady;
         public bool CommandReady { get { bool tmpVar = commandReady; commandReady = false; return tmpVar; } }
         public int Port { get; }
-        public string SecurityKey { get; }
+        public string SecurityKey { get; private set; }
 
         public APIBridge(int port)
         {
             Port = port;
             commands = new List<ICommandsBase>()
             {
-                new MoveGridTo()
+                new MoveGridTo(),
+                new GetLastPlayersLoginTime()
             };
             SecurityKey = "V7ry55j2i3WTaLBYxDuFtg==";
             Command = null;
@@ -43,22 +45,32 @@ namespace SE_ClientControlPlugin.API
 
         private string GenerateSecurityKey()
         {
-            return "V7ry55j2i3WTaLBYxDuFtg==";
+            Random r = new Random(DateTime.Now.Millisecond);
+            byte[] b = new byte[10];
+
+            for (int i = 0; i < b.Length; i++)
+            {
+                b[i] = Convert.ToByte(r.Next(36) + 65);
+            }
+            SecurityKey = Convert.ToBase64String(b);
+            return SecurityKey;
         }
 
 
         private string[] GetArgumentsFromLink(string link)
         {
+            if (link.Length == 0) return new string[0];
             string[] firstArgs = link.Split('&');
             return firstArgs.Select(arg => { return arg.Split('=')[1]; }).ToArray();
         }
+
         private string[] ReceiveData(Socket client)
         {
             string ReceivedData = "";
             byte[] bytesReceived = new byte[1024];
             int bytes = 0;
 
-            Regex LinkPattern = new Regex(@"GET\s\/customapi\/(\w*)\?(.*)\sHTTP");
+            Regex LinkPattern = new Regex(@"GET\s\/customapi\/(\w*)\?*(.*)\sHTTP");
             Regex AuthorizationPattern = new Regex(@"Authorization:\s(\d*):(.*)\r\n");
             Regex DatePattern = new Regex(@"Date:\s(.*)\r\n");
             Thread.Sleep(10);
@@ -77,7 +89,11 @@ namespace SE_ClientControlPlugin.API
             string AuthorizationDate = DatePattern.Match(ReceivedData).Groups[1].Value;
             string CommandName = LinkPattern.Match(ReceivedData).Groups[1].Value;
             string CommandArgs = HttpUtility.UrlDecode(LinkPattern.Match(ReceivedData).Groups[2].Value);
-            string checkMessage = $"/customapi/{CommandName}?{CommandArgs}\r\n{AuthorizationNonce}\r\n{AuthorizationDate}\r\n";
+            string checkMessage;
+            if (!String.IsNullOrEmpty(CommandArgs))
+                checkMessage = $"/customapi/{CommandName}?{CommandArgs}\r\n{AuthorizationNonce}\r\n{AuthorizationDate}\r\n";
+            else
+                checkMessage = $"/customapi/{CommandName}\r\n{AuthorizationNonce}\r\n{AuthorizationDate}\r\n";
 
             if (!Authorization(AuthorizationHash, checkMessage))
                 return null;
@@ -135,7 +151,7 @@ namespace SE_ClientControlPlugin.API
             IPAddress IA = IPAddress.Parse("127.0.0.1");
             IPEndPoint IEP = new IPEndPoint(IA, Port);
             //Socket listener = new Socket(IEP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            TcpListener listener = new TcpListener(IA,Port);
+            TcpListener listener = new TcpListener(IA, Port);
             Socket client;
             listener.Start();
             while (isRunning)
@@ -171,6 +187,7 @@ namespace SE_ClientControlPlugin.API
                 //Thread.Sleep(100);
             }
 
+            listener.Stop();
 
         }
 
